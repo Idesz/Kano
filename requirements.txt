@@ -1,0 +1,10 @@
+ollama
+chromadb
+rich
+textual
+beautifulsoup4
+scrapy
+yt-dlp
+python-dotenv
+requests
+pydantic
