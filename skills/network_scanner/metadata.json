@@ -1,0 +1,6 @@
+{
+    "name": "network_scanner",
+    "description": "Wraps network scanning tools like nmap to identify open ports and services.",
+    "class_name": "NetworkScanner",
+    "version": "1.0.0"
+}

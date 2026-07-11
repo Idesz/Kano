@@ -9,6 +9,7 @@ from agents.base_agent import BaseAgent
 from agents.coder_agent import CoderAgent
 from agents.ingestor_agent import IngestorAgent
 from agents.scaffold_agent import ScaffoldAgent
+from agents.security_agent import SecurityAgent
 
 class MasterAgent(BaseAgent):
     def __init__(self):
@@ -18,6 +19,7 @@ class MasterAgent(BaseAgent):
         self.coder = CoderAgent(self.router)
         self.ingestor = IngestorAgent(self.router)
         self.scaffolder = ScaffoldAgent(self.router)
+        self.security = SecurityAgent(self.router)
         self.decision_cache = {}
         logging.basicConfig(level=logging.INFO)
 
@@ -31,20 +33,18 @@ class MasterAgent(BaseAgent):
         prompt = f"""
         Analyze the following user request and determine the target agent or skill.
         Available Skills: {json.dumps(skills_list)}
-        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database.
+        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database, Security (pentesting/auditing).
 
-        CRITICAL: Determine if the task is OBJECTIVE or SUBJECTIVE.
-        - OBJECTIVE: Logic, algorithms, math, data processing, backend code. (needs_approval: false)
-        - SUBJECTIVE: UI/UX, colors, layout, design, creative choices. (needs_approval: true)
+        - OBJECTIVE: Logic, algorithms, data.
+        - SUBJECTIVE: UI/UX, design.
+        - SECURITY: Pentesting, scanning, auditing.
 
         Response must be valid JSON:
         {{
             "target": "skill_name or agent_name or SkillCreator or Scaffold",
             "reason": "short explanation",
             "needs_approval": true/false,
-            "parameters": {{}},
-            "new_skill_name": "if SkillCreator",
-            "blueprint": "if Scaffold"
+            "parameters": {{}}
         }}
 
         Request: "{user_input}"
@@ -61,19 +61,19 @@ class MasterAgent(BaseAgent):
 
     def run(self, task: str, approved: bool = False):
         decision = self.classify_intent(task)
-
         if decision.get("needs_approval") and not approved:
             return "APPROVAL_REQUIRED", decision.get("reason")
 
         target = decision.get("target")
 
-        # Ingestor logic refinement: detect YouTube
         if "youtube.com" in task or "youtu.be" in task:
             target = "media_fetcher"
             decision["parameters"]["url"] = re.findall(r'(https?://\S+)', task)[0]
             decision["parameters"]["action"] = "get_info"
 
-        if target == "SkillCreator":
+        if target == "Security":
+            return self.security.run(task)
+        elif target == "SkillCreator":
             return self.create_new_skill(decision.get("new_skill_name", "new_skill"), task)
         elif target == "Scaffold":
             return self.scaffolder.create_project(decision.get("blueprint", "fastapi_supabase"), "generated_project")

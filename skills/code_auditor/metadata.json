@@ -1,0 +1,6 @@
+{
+    "name": "code_auditor",
+    "description": "Analyzes Python code for common security vulnerabilities like SQL injection, XSS, and hardcoded secrets.",
+    "class_name": "CodeAuditor",
+    "version": "1.0.0"
+}
