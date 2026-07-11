@@ -1,0 +1,60 @@
+Screen {
+    background: #000000;
+}
+
+#header {
+    dock: top;
+    height: 3;
+    content-align: center middle;
+    background: #000000;
+    color: #00FF00;
+    text-style: bold;
+    border-bottom: double #00FF00;
+}
+
+#footer {
+    dock: bottom;
+    height: 1;
+    background: #000000;
+    color: #00FF00;
+}
+
+.main-container {
+    layout: grid;
+    grid-size: 2;
+    grid-columns: 1fr 2fr;
+}
+
+#log-panel {
+    height: 100%;
+    border: tall #00FF00;
+    background: #000000;
+    color: #00FF00;
+    padding: 1;
+    overflow-y: scroll;
+}
+
+#code-panel {
+    height: 100%;
+    border: tall #00FF00;
+    background: #000000;
+    color: #00FF00;
+    padding: 1;
+    overflow-y: scroll;
+}
+
+#input-container {
+    dock: bottom;
+    height: 3;
+    border-top: tall #00FF00;
+}
+
+#prompt-input {
+    background: #000000;
+    color: #00FF00;
+    border: none;
+}
+
+#prompt-input:focus {
+    border: none;
+}
