@@ -34,15 +34,14 @@ class KanoDashboard(App):
         self.log_panel = self.query_one("#log-panel", RichLog)
         self.code_panel = self.query_one("#code-panel", Static)
         self.log_panel.write("[bold green]Kano System Online.[/bold green]")
+        self.log_panel.write("[bold cyan]Ponytail Mode: Active (Lazy Senior Dev Ladder engaged)[/bold cyan]")
         self.log_panel.write(f"[green]Available Skills: {', '.join([s['name'] for s in self.master.registry.list_skills()])}[/green]")
         self.learner.start()
-        self.log_panel.write("[blue]Idle Learning active.[/blue]")
         self.query_one("#prompt-input").focus()
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         user_input = event.value.strip()
         if not user_input: return
-
         self.query_one("#prompt-input").value = ""
 
         if self.pending_task:
@@ -53,20 +52,20 @@ class KanoDashboard(App):
                 asyncio.create_task(self.process_request(task, approved=True))
             else:
                 self.pending_task = None
-                self.log_panel.write("[red]Task cancelled by user.[/red]")
+                self.log_panel.write("[red]Task cancelled.[/red]")
             return
 
         self.log_panel.write(f"[bold white]> {user_input}[/bold white]")
         asyncio.create_task(self.process_request(user_input))
 
     async def process_request(self, user_input: str, approved: bool = False):
-        self.log_panel.write("[yellow]Kano is thinking...[/yellow]")
+        self.log_panel.write("[yellow]Walking the Laziness Ladder...[/yellow]")
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, self.master.run, user_input, approved)
 
         if isinstance(result, tuple) and result[0] == "APPROVAL_REQUIRED":
             self.pending_task = user_input
-            self.log_panel.write(f"[bold orange3]⚠️ SUBJECTIVE TASK DETECTED:[/bold orange3] {result[1]}")
+            self.log_panel.write(f"[bold orange3]⚠️ SUBJECTIVE TASK:[/bold orange3] {result[1]}")
             self.log_panel.write("[bold cyan]Proceed? (y/n)[/bold cyan]")
             return
 

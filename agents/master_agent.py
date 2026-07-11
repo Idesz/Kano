@@ -31,13 +31,12 @@ class MasterAgent(BaseAgent):
         blueprints = self.scaffolder.list_blueprints()
 
         prompt = f"""
-        Analyze the following user request and determine the target agent or skill.
+        Analyze the following user request and determine the target.
         Available Skills: {json.dumps(skills_list)}
-        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database, Security (pentesting/auditing).
+        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database, Security.
 
-        - OBJECTIVE: Logic, algorithms, data.
-        - SUBJECTIVE: UI/UX, design.
-        - SECURITY: Pentesting, scanning, auditing.
+        Philosophy: We follow the 'Ponytail' (Lazy Senior Dev) approach.
+        Prefer standard library and existing skills over creating new things.
 
         Response must be valid JSON:
         {{
@@ -68,8 +67,7 @@ class MasterAgent(BaseAgent):
 
         if "youtube.com" in task or "youtu.be" in task:
             target = "media_fetcher"
-            decision["parameters"]["url"] = re.findall(r'(https?://\S+)', task)[0]
-            decision["parameters"]["action"] = "get_info"
+            decision["parameters"] = {"url": re.findall(r'(https?://\S+)', task)[0], "action": "get_info"}
 
         if target == "Security":
             return self.security.run(task)
@@ -86,7 +84,7 @@ class MasterAgent(BaseAgent):
             skill_instance = skill_info["class"]()
             return skill_instance.execute(**decision.get("parameters", {}))
 
-        return f"Decision: {target} (Executing...)"
+        return f"Decision: {target} (Executing with Ponytail efficiency...)"
 
     def create_new_skill(self, skill_name: str, objective: str):
         logging.info(f"Creating new skill: {skill_name}")
@@ -95,7 +93,8 @@ class MasterAgent(BaseAgent):
         meta_resp = ollama.generate(model=model, prompt=metadata_prompt, format="json")
         metadata = json.loads(meta_resp['response'])
 
-        code_prompt = f"Write a Python class for a Kano skill named '{skill_name}'. It should have an 'execute' method. Objective: {objective}. Code only."
+        # Skill creation also follows Ponytail
+        code_prompt = f"Write a Python class for a Kano skill named '{skill_name}'. Use Ponytail philosophy (minimum code, stdlib first). Objective: {objective}. Code only."
         code, status = self.coder.run(code_prompt)
 
         skill_dir = os.path.join("skills", skill_name)
@@ -106,4 +105,4 @@ class MasterAgent(BaseAgent):
             f.write(code)
 
         self.registry.load_skills()
-        return f"Successfully created and registered new skill: {skill_name}"
+        return f"Successfully created new skill: {skill_name} (Ponytail approved)"

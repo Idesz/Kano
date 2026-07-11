@@ -1,0 +1,6 @@
+{
+    "name": "ponytail",
+    "description": "Applies the 'Lazy Senior Dev' 6-rung ladder: YAGNI, existing code, stdlib, native platform, installed dependency, one-liner.",
+    "class_name": "Ponytail",
+    "version": "1.0.0"
+}

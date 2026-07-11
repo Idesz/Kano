@@ -10,35 +10,34 @@ A **Kano** egy teljesen autonóm, terminálban futó (CLI) fejlesztői rendszer,
 
 ## 🏗 Megvalósított Funkciók
 
-### 1. Security & Pentesting (ÚJ!)
-- **Security Agent:** PentestGPT-stílusú érvelés és támadási tervek generálása.
-- **Code Auditor:** Automatikus biztonsági elemzés (SQLi, hardkódolt titkok, eval() használata).
-- **Network Scanner:** Nmap alapú hálózati szkennelés és szolgáltatásfelderítés.
+### 1. Ponytail Mode: Lazy Senior Dev (ÚJ!)
+A Kano mostantól a **Ponytail** filozófiát követi. Mielőtt bármilyen kódot írna, végigjárja a "Lustaság Létráját" (Laziness Ladder):
+1. **YAGNI:** Tényleg kell ez a funkció?
+2. **DRY:** Van már ilyen a kódbázisban?
+3. **STDLIB:** Megoldható a Python standard library-vel?
+4. **NATIVE:** Megoldható natív platform funkciókkal?
+5. **DEPS:** Van már telepítve olyan csomag, ami tudja ezt?
+6. **MINIMUM:** Mi a legkevesebb kód, ami még működik?
+*Eredmény: Kevesebb kód, kevesebb hiba, gyorsabb futtatás.*
 
-### 2. Szelektív Interakciós Protokoll
-- **Objektív feladatok:** Automatikus végrehajtás (kódolás, algoritmusok, adatkezelés).
-- **Szubjektív feladatok:** UI/UX, színek, kreatív döntések esetén a rendszer megáll és **jóváhagyást kér (y/n)**.
+### 2. Security & Pentesting
+- **Security Agent:** PentestGPT-stílusú stratégiai tervezés.
+- **Code Auditor:** Automatikus biztonsági elemzés.
+- **Network Scanner:** Nmap alapú hálózatfelderítés.
 
-### 3. Autonóm Fejlesztés és Tanulás
-- **Self-Healing Coder:** Docker sandboxban validált kódgenerálás automatikus `pytest` tesztekkel.
-- **Skill Creator:** Kano képes felismerni, ha hiányzik egy képessége, és autonóm módon megírja/regisztrálja az új Skill-t.
-- **Idle Learning:** Amikor nem használd, a Kano a `raw_data` mappából tanul, összegez és vektorizál a memóriájába.
-- **Scaffold Agent:** Komplett projektvázak generálása (pl. FastAPI + Supabase).
+### 3. Szelektív Interakciós Protokoll
+- **Objektív feladatok:** Autonóm végrehajtás.
+- **Szubjektív feladatok:** UI/UX, kreatív döntések esetén **jóváhagyást kér (y/n)**.
 
-### 4. Intelligens Adatgyűjtés
-- **Ingestor:** Automatikus URL felismerés. A YouTube linkeket magától a `media_fetcher` skillhez irányítja.
+### 4. Autonóm Fejlesztés és Tanulás
+- **Self-Healing Coder:** Docker sandboxban validált kódgenerálás.
+- **Skill Creator:** Új képességek autonóm létrehozása és regisztrációja.
+- **Idle Learning:** Háttérben futó tudásbázis építés a `raw_data` mappából.
 
 ## 🛠 Technológiai Stack
-- **Python 3.11+, Ollama (Llama3, DeepSeek), ChromaDB, Textual, Docker, Nmap, BeautifulSoup, yt-dlp.**
+- **Python 3.11+, Ollama (Llama3, DeepSeek), ChromaDB, Textual, Docker, Nmap.**
 
 ## ⚙️ Telepítés és Indítás
-1.  **Ollama, Docker & Nmap** legyen telepítve és fusson.
+1.  **Ollama, Docker & Nmap** telepítése.
 2.  `pip install -r requirements.txt`
 3.  `python main.py`
-
-## 📂 Könyvtárszerkezet
-- `/agents`: Master, Coder, Control, Ingestor, Scaffold, **Security**.
-- `/skills`: Dinamikus modulok (file, web, media, **security audit, network scan**).
-- `/core`: Rendszermotor, Memória, Tanulási hurok.
-- `/raw_data`: Nyers adatok helye.
-- `/blueprints`: Projekt sablonok.
