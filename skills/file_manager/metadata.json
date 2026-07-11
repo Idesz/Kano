@@ -1,0 +1,6 @@
+{
+    "name": "file_manager",
+    "description": "Provides capabilities to read, write, and list files on the local filesystem.",
+    "class_name": "FileManager",
+    "version": "1.0.0"
+}
