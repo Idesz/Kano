@@ -19,6 +19,7 @@ class KanoDashboard(App):
         super().__init__()
         self.master = MasterAgent()
         self.learner = IdleLearner()
+        self.pending_task = None
 
     def compose(self) -> ComposeResult:
         yield Static("KANO 🤖 - Autonomous Developer Ecosystem", id="header")
@@ -34,24 +35,40 @@ class KanoDashboard(App):
         self.code_panel = self.query_one("#code-panel", Static)
         self.log_panel.write("[bold green]Kano System Online.[/bold green]")
         self.log_panel.write(f"[green]Available Skills: {', '.join([s['name'] for s in self.master.registry.list_skills()])}[/green]")
-
-        # Start Idle Learner
         self.learner.start()
-        self.log_panel.write("[blue]Idle Learning background process started.[/blue]")
-
+        self.log_panel.write("[blue]Idle Learning active.[/blue]")
         self.query_one("#prompt-input").focus()
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         user_input = event.value.strip()
-        if user_input:
-            self.log_panel.write(f"[bold white]> {user_input}[/bold white]")
-            self.query_one("#prompt-input").value = ""
-            asyncio.create_task(self.process_request(user_input))
+        if not user_input: return
 
-    async def process_request(self, user_input: str):
+        self.query_one("#prompt-input").value = ""
+
+        if self.pending_task:
+            if user_input.lower() in ['y', 'yes', 'igen']:
+                task = self.pending_task
+                self.pending_task = None
+                self.log_panel.write("[green]Approval received. Proceeding...[/green]")
+                asyncio.create_task(self.process_request(task, approved=True))
+            else:
+                self.pending_task = None
+                self.log_panel.write("[red]Task cancelled by user.[/red]")
+            return
+
+        self.log_panel.write(f"[bold white]> {user_input}[/bold white]")
+        asyncio.create_task(self.process_request(user_input))
+
+    async def process_request(self, user_input: str, approved: bool = False):
         self.log_panel.write("[yellow]Kano is thinking...[/yellow]")
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self.master.run, user_input)
+        result = await loop.run_in_executor(None, self.master.run, user_input, approved)
+
+        if isinstance(result, tuple) and result[0] == "APPROVAL_REQUIRED":
+            self.pending_task = user_input
+            self.log_panel.write(f"[bold orange3]⚠️ SUBJECTIVE TASK DETECTED:[/bold orange3] {result[1]}")
+            self.log_panel.write("[bold cyan]Proceed? (y/n)[/bold cyan]")
+            return
 
         if isinstance(result, tuple) and len(result) == 2:
             code, status = result

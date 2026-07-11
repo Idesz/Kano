@@ -16,6 +16,9 @@ class IngestorAgent(BaseAgent):
             os.makedirs(self.raw_data_dir)
 
     def fetch_url(self, url: str):
+        if "youtube.com" in url or "youtu.be" in url:
+            return f"Media URL detected. Routing to media_fetcher skill for: {url}"
+
         try:
             response = requests.get(url)
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -29,4 +32,5 @@ class IngestorAgent(BaseAgent):
             return f"Error fetching URL: {e}"
 
     def run(self, task: str):
+        # MasterAgent already handles routing, this is a safety fallback
         return self.fetch_url(task)

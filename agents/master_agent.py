@@ -2,6 +2,7 @@ import json
 import ollama
 import logging
 import os
+import re
 from core.model_router import ModelRouter
 from core.skill_registry import SkillRegistry
 from agents.base_agent import BaseAgent
@@ -30,16 +31,17 @@ class MasterAgent(BaseAgent):
         prompt = f"""
         Analyze the following user request and determine the target agent or skill.
         Available Skills: {json.dumps(skills_list)}
-        Worker Agents: Coder (one file), Scaffold (full projects), Ingestor (fetching), Repo, Database.
-        Available Blueprints for Scaffold: {blueprints}
+        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database.
 
-        If the request requires a new tool, set target to "SkillCreator".
-        If the request is to start a full project/app, set target to "Scaffold".
+        CRITICAL: Determine if the task is OBJECTIVE or SUBJECTIVE.
+        - OBJECTIVE: Logic, algorithms, math, data processing, backend code. (needs_approval: false)
+        - SUBJECTIVE: UI/UX, colors, layout, design, creative choices. (needs_approval: true)
 
         Response must be valid JSON:
         {{
             "target": "skill_name or agent_name or SkillCreator or Scaffold",
             "reason": "short explanation",
+            "needs_approval": true/false,
             "parameters": {{}},
             "new_skill_name": "if SkillCreator",
             "blueprint": "if Scaffold"
@@ -55,7 +57,36 @@ class MasterAgent(BaseAgent):
             self.decision_cache[user_input] = decision
             return decision
         except Exception:
-            return {"target": "Coder", "reason": "Fallback", "parameters": {}}
+            return {"target": "Coder", "reason": "Fallback", "needs_approval": False, "parameters": {}}
+
+    def run(self, task: str, approved: bool = False):
+        decision = self.classify_intent(task)
+
+        if decision.get("needs_approval") and not approved:
+            return "APPROVAL_REQUIRED", decision.get("reason")
+
+        target = decision.get("target")
+
+        # Ingestor logic refinement: detect YouTube
+        if "youtube.com" in task or "youtu.be" in task:
+            target = "media_fetcher"
+            decision["parameters"]["url"] = re.findall(r'(https?://\S+)', task)[0]
+            decision["parameters"]["action"] = "get_info"
+
+        if target == "SkillCreator":
+            return self.create_new_skill(decision.get("new_skill_name", "new_skill"), task)
+        elif target == "Scaffold":
+            return self.scaffolder.create_project(decision.get("blueprint", "fastapi_supabase"), "generated_project")
+        elif target == "Coder":
+            return self.coder.run(task)
+        elif target == "Ingestor":
+            return self.ingestor.run(task)
+        elif target in self.registry.skills:
+            skill_info = self.registry.get_skill(target)
+            skill_instance = skill_info["class"]()
+            return skill_instance.execute(**decision.get("parameters", {}))
+
+        return f"Decision: {target} (Executing...)"
 
     def create_new_skill(self, skill_name: str, objective: str):
         logging.info(f"Creating new skill: {skill_name}")
@@ -76,22 +107,3 @@ class MasterAgent(BaseAgent):
 
         self.registry.load_skills()
         return f"Successfully created and registered new skill: {skill_name}"
-
-    def run(self, task: str):
-        decision = self.classify_intent(task)
-        target = decision.get("target")
-
-        if target == "SkillCreator":
-            return self.create_new_skill(decision.get("new_skill_name", "new_skill"), task)
-        elif target == "Scaffold":
-            return self.scaffolder.create_project(decision.get("blueprint", "fastapi_supabase"), "generated_project")
-        elif target == "Coder":
-            return self.coder.run(task)
-        elif target == "Ingestor":
-            return self.ingestor.run(task)
-        elif target in self.registry.skills:
-            skill_info = self.registry.get_skill(target)
-            skill_instance = skill_info["class"]()
-            return skill_instance.execute(**decision.get("parameters", {}))
-
-        return f"Decision: {target} (Under development)"
