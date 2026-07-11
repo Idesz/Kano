@@ -1,0 +1,12 @@
+{
+    "name": "fastapi_supabase",
+    "description": "Full-stack backend with FastAPI, Pydantic, and Supabase integration.",
+    "files": [
+        "main.py",
+        "models.py",
+        "database.py",
+        "requirements.txt",
+        "Dockerfile",
+        ".env.example"
+    ]
+}

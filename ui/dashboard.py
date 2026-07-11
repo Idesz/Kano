@@ -6,6 +6,7 @@ from textual.widgets import Header, Footer, Static, Input, RichLog
 from textual.binding import Binding
 from textual.containers import Container, Horizontal
 from agents.master_agent import MasterAgent
+from core.idle_learner import IdleLearner
 
 class KanoDashboard(App):
     CSS_PATH = "styles.tcss"
@@ -17,6 +18,7 @@ class KanoDashboard(App):
     def __init__(self):
         super().__init__()
         self.master = MasterAgent()
+        self.learner = IdleLearner()
 
     def compose(self) -> ComposeResult:
         yield Static("KANO 🤖 - Autonomous Developer Ecosystem", id="header")
@@ -32,6 +34,11 @@ class KanoDashboard(App):
         self.code_panel = self.query_one("#code-panel", Static)
         self.log_panel.write("[bold green]Kano System Online.[/bold green]")
         self.log_panel.write(f"[green]Available Skills: {', '.join([s['name'] for s in self.master.registry.list_skills()])}[/green]")
+
+        # Start Idle Learner
+        self.learner.start()
+        self.log_panel.write("[blue]Idle Learning background process started.[/blue]")
+
         self.query_one("#prompt-input").focus()
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -39,23 +46,19 @@ class KanoDashboard(App):
         if user_input:
             self.log_panel.write(f"[bold white]> {user_input}[/bold white]")
             self.query_one("#prompt-input").value = ""
-
-            # Start background task to avoid freezing UI
             asyncio.create_task(self.process_request(user_input))
 
     async def process_request(self, user_input: str):
         self.log_panel.write("[yellow]Kano is thinking...[/yellow]")
-
-        # Run classification and execution in a thread to keep UI responsive
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, self.master.run, user_input)
-
-        self.log_panel.write(f"[green]Result:[/green] {result}")
 
         if isinstance(result, tuple) and len(result) == 2:
             code, status = result
             self.code_panel.update(code)
             self.log_panel.write(f"[bold blue]Status:[/bold blue] {status}")
+        else:
+            self.log_panel.write(f"[green]Result:[/green] {result}")
 
     def action_clear_log(self) -> None:
         self.log_panel.clear()

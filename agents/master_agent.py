@@ -1,19 +1,22 @@
 import json
 import ollama
 import logging
+import os
 from core.model_router import ModelRouter
 from core.skill_registry import SkillRegistry
 from agents.base_agent import BaseAgent
 from agents.coder_agent import CoderAgent
 from agents.ingestor_agent import IngestorAgent
+from agents.scaffold_agent import ScaffoldAgent
 
 class MasterAgent(BaseAgent):
     def __init__(self):
-        self.router = ModelRouter()
-        super().__init__("MasterAgent", self.router)
+        router = ModelRouter()
+        super().__init__("MasterAgent", router)
         self.registry = SkillRegistry()
         self.coder = CoderAgent(self.router)
         self.ingestor = IngestorAgent(self.router)
+        self.scaffolder = ScaffoldAgent(self.router)
         self.decision_cache = {}
         logging.basicConfig(level=logging.INFO)
 
@@ -22,16 +25,24 @@ class MasterAgent(BaseAgent):
             return self.decision_cache[user_input]
 
         skills_list = self.registry.list_skills()
+        blueprints = self.scaffolder.list_blueprints()
+
         prompt = f"""
-        Analyze the following user request and determine which skill or worker agent should handle it.
+        Analyze the following user request and determine the target agent or skill.
         Available Skills: {json.dumps(skills_list)}
-        Worker Agents: Coder, Ingestor, Repo, Database.
+        Worker Agents: Coder (one file), Scaffold (full projects), Ingestor (fetching), Repo, Database.
+        Available Blueprints for Scaffold: {blueprints}
+
+        If the request requires a new tool, set target to "SkillCreator".
+        If the request is to start a full project/app, set target to "Scaffold".
 
         Response must be valid JSON:
         {{
-            "target": "skill_name or agent_name",
+            "target": "skill_name or agent_name or SkillCreator or Scaffold",
             "reason": "short explanation",
-            "parameters": {{}}
+            "parameters": {{}},
+            "new_skill_name": "if SkillCreator",
+            "blueprint": "if Scaffold"
         }}
 
         Request: "{user_input}"
@@ -46,19 +57,38 @@ class MasterAgent(BaseAgent):
         except Exception:
             return {"target": "Coder", "reason": "Fallback", "parameters": {}}
 
+    def create_new_skill(self, skill_name: str, objective: str):
+        logging.info(f"Creating new skill: {skill_name}")
+        metadata_prompt = f"Create a metadata.json for a Kano skill named '{skill_name}' that does: {objective}. Return valid JSON."
+        model = self.router.get_model_for_task("reasoning")
+        meta_resp = ollama.generate(model=model, prompt=metadata_prompt, format="json")
+        metadata = json.loads(meta_resp['response'])
+
+        code_prompt = f"Write a Python class for a Kano skill named '{skill_name}'. It should have an 'execute' method. Objective: {objective}. Code only."
+        code, status = self.coder.run(code_prompt)
+
+        skill_dir = os.path.join("skills", skill_name)
+        os.makedirs(skill_dir, exist_ok=True)
+        with open(os.path.join(skill_dir, "metadata.json"), "w") as f:
+            json.dump(metadata, f, indent=4)
+        with open(os.path.join(skill_dir, f"{skill_name}.py"), "w") as f:
+            f.write(code)
+
+        self.registry.load_skills()
+        return f"Successfully created and registered new skill: {skill_name}"
+
     def run(self, task: str):
         decision = self.classify_intent(task)
         target = decision.get("target")
 
-        if target == "Coder":
+        if target == "SkillCreator":
+            return self.create_new_skill(decision.get("new_skill_name", "new_skill"), task)
+        elif target == "Scaffold":
+            return self.scaffolder.create_project(decision.get("blueprint", "fastapi_supabase"), "generated_project")
+        elif target == "Coder":
             return self.coder.run(task)
         elif target == "Ingestor":
-            url = decision.get("parameters", {}).get("url")
-            if not url and "http" in task:
-                import re
-                urls = re.findall(r'(https?://\S+)', task)
-                url = urls[0] if urls else ""
-            return self.ingestor.run(url or task)
+            return self.ingestor.run(task)
         elif target in self.registry.skills:
             skill_info = self.registry.get_skill(target)
             skill_instance = skill_info["class"]()
