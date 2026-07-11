@@ -1,5 +1,6 @@
 import sys
 import os
+import asyncio
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, Input, RichLog
 from textual.binding import Binding
@@ -39,14 +40,22 @@ class KanoDashboard(App):
             self.log_panel.write(f"[bold white]> {user_input}[/bold white]")
             self.query_one("#prompt-input").value = ""
 
-            # Run Master Agent logic
-            self.log_panel.write("[yellow]Thinking...[/yellow]")
-            decision = self.master.classify_intent(user_input)
-            self.log_panel.write(f"[blue]Action: {decision.get('target')}[/blue]")
-            self.log_panel.write(f"[blue]Reason: {decision.get('reason')}[/blue]")
+            # Start background task to avoid freezing UI
+            asyncio.create_task(self.process_request(user_input))
 
-            # Simple simulation for now
-            self.log_panel.write("[green]Operation completed.[/green]")
+    async def process_request(self, user_input: str):
+        self.log_panel.write("[yellow]Kano is thinking...[/yellow]")
+
+        # Run classification and execution in a thread to keep UI responsive
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, self.master.run, user_input)
+
+        self.log_panel.write(f"[green]Result:[/green] {result}")
+
+        if isinstance(result, tuple) and len(result) == 2:
+            code, status = result
+            self.code_panel.update(code)
+            self.log_panel.write(f"[bold blue]Status:[/bold blue] {status}")
 
     def action_clear_log(self) -> None:
         self.log_panel.clear()

@@ -2,10 +2,14 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from core.memory import MemoryManager
+from agents.base_agent import BaseAgent
 import logging
 
-class IngestorAgent:
-    def __init__(self, raw_data_dir="raw_data"):
+class IngestorAgent(BaseAgent):
+    def __init__(self, model_router=None, raw_data_dir="raw_data"):
+        from core.model_router import ModelRouter
+        router = model_router or ModelRouter()
+        super().__init__("IngestorAgent", router)
         self.raw_data_dir = raw_data_dir
         self.memory = MemoryManager()
         if not os.path.exists(self.raw_data_dir):
@@ -28,6 +32,10 @@ class IngestorAgent:
         except Exception as e:
             return f"Error fetching URL: {e}"
 
+    def run(self, task: str):
+        # Implementation for MasterAgent.run interface
+        return self.fetch_url(task)
+
     def process_raw_data(self):
         """Processes files in raw_data and moves them to RAG memory."""
         for filename in os.listdir(self.raw_data_dir):
@@ -37,14 +45,11 @@ class IngestorAgent:
                     with open(filepath, 'r') as f:
                         content = f.read()
 
-                    # Here we would normally summarize with LLM first
                     self.memory.add_document(
                         text=content,
                         metadata={"source": filename},
                         doc_id=filename
                     )
-                    # For now, we don't delete to keep 'raw_data' as requested,
-                    # but we could mark as processed.
                     logging.info(f"Vectorized {filename} into ChromaDB")
                 except Exception as e:
                     logging.error(f"Failed to process {filename}: {e}")

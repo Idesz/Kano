@@ -1,0 +1,6 @@
+{
+    "name": "web_browser",
+    "description": "Searches the web and scrapes content from websites.",
+    "class_name": "WebBrowser",
+    "version": "1.0.0"
+}

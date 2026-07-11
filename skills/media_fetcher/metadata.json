@@ -1,0 +1,6 @@
+{
+    "name": "media_fetcher",
+    "description": "Extracts audio, subtitles, and metadata from YouTube and other media sites.",
+    "class_name": "MediaFetcher",
+    "version": "1.0.0"
+}
