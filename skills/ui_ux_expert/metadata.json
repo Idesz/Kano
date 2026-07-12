@@ -1,0 +1,6 @@
+{
+    "name": "ui_ux_expert",
+    "description": "Provides professional UI/UX feedback and redesign suggestions (inspired by nextlevelbuilder/ui-ux-pro-max-skill).",
+    "class_name": "UIUXExpert",
+    "version": "1.0.0"
+}

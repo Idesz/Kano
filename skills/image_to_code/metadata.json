@@ -1,0 +1,6 @@
+{
+    "name": "image_to_code",
+    "description": "Converts image descriptions or visual requirements into code (inspired by leonxlnx/taste-skill).",
+    "class_name": "ImageToCode",
+    "version": "1.0.0"
+}

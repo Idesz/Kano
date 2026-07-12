@@ -1,0 +1,6 @@
+{
+    "name": "api_designer",
+    "description": "Designs robust REST/GraphQL API specifications.",
+    "class_name": "APIDesigner",
+    "version": "1.0.0"
+}

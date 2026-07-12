@@ -1,0 +1,6 @@
+{
+    "name": "pdf_parser",
+    "description": "Extracts text and data from PDF documents (inspired by anthropics/skills).",
+    "class_name": "PDFParser",
+    "version": "1.0.0"
+}

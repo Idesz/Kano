@@ -1,0 +1,6 @@
+{
+    "name": "tdd",
+    "description": "Guides the agent through Test Driven Development (inspired by mattpocock/skills).",
+    "class_name": "TDD",
+    "version": "1.0.0"
+}
