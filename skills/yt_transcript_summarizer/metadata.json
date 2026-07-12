@@ -1,0 +1,6 @@
+{
+    "name": "yt_transcript_summarizer",
+    "description": "Summarizes YouTube video transcripts using LLM logic.",
+    "class_name": "YTTranscriptSummarizer",
+    "version": "1.0.0"
+}

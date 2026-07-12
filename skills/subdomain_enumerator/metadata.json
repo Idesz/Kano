@@ -1,0 +1,6 @@
+{
+    "name": "subdomain_enumerator",
+    "description": "Performs passive and active subdomain enumeration guidance.",
+    "class_name": "SubdomainEnumerator",
+    "version": "1.0.0"
+}

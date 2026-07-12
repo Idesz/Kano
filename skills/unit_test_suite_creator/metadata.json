@@ -1,0 +1,6 @@
+{
+    "name": "unit_test_suite_creator",
+    "description": "Generates a full pytest suite for existing modules.",
+    "class_name": "UnitTestSuiteCreator",
+    "version": "1.0.0"
+}

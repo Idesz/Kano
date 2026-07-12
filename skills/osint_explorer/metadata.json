@@ -1,0 +1,6 @@
+{
+    "name": "osint_explorer",
+    "description": "Provides guidance on OSINT gathering for individuals or organizations.",
+    "class_name": "OSINTExplorer",
+    "version": "1.0.0"
+}

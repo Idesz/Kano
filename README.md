@@ -14,33 +14,38 @@ A **Kano** egy teljesen autonóm, terminálban futó (CLI) fejlesztői rendszer,
 A Kano a **Ponytail** filozófiát követi. Mielőtt kódot írna, végigjárja a "Lustaság Létráját" (Laziness Ladder):
 1. **YAGNI:** Kell ez? | 2. **DRY:** Van már? | 3. **STDLIB:** Python alap? | 4. **NATIVE:** OS alap? | 5. **DEPS:** Van már csomag? | 6. **MINIMUM:** Legkevesebb kód.
 
-### 2. 📚 Kiterjesztett Skills Katalógus (skills.sh)
-A Kano integrálja a legfontosabb képességeket a modern fejlesztéshez:
+### 2. 🛡️ Cyber Security & Pentesting (Kano Security)
+- **Security Agent:** PentestGPT-stílusú stratégiai tervezés és támadási tervek.
+- **Metasploit Helper:** Modul ajánlások és parancs generálás.
+- **Subdomain Enumerator:** Altartomány felderítési útmutató.
+- **OSINT Explorer:** Nyílt forrású hírszerzési terv készítés.
+- **Code Auditor:** Biztonsági kód-audit (SQLi, secrets).
+- **Network Scanner:** Nmap alapú hálózati szkennelés.
+
+### 3. 💻 Programozás és Szoftverfejlesztés
+- **FastAPI Route Builder:** CRUD végpontok és Pydantic sémák generálása.
+- **Unit Test Suite Creator:** Teljes pytest készletek készítése.
 - **Architecture Optimizer:** Kódbázis architektúra javítás.
 - **Frontend Designer:** Modern komponensek és Tailwind UI tervezése.
-- **Image-to-Code:** Vizuális leírások vagy tervek átalakítása kóddá.
-- **UI/UX Expert:** Professzionális design és használhatósági audit.
-- **Systematic Debugger:** Mély hibaelemzés és javítási terv.
-- **TDD Agent:** Test-Driven Development folyamat vezérlése.
+- **Image-to-Code:** Vizuális tervek kódolása.
+- **TDD Agent:** Tesztvezérelt fejlesztési folyamat.
 - **API Designer:** REST/GraphQL interfész tervezés.
-- **PRD Generator:** Ötletből termékspecifikáció (PRD).
-- **PDF Parser:** Adatkivonás dokumentumokból.
-- **Security Agent:** PentestGPT-stílusú stratégiai tervezés és audit.
-- **Network Scanner:** Hálózati felderítés (nmap).
-- **Media Fetcher:** YouTube adatok és feliratok kezelése.
-- **Web Browser:** Intelligens webes keresés és tartalomgyűjtés.
 
-### 3. Szelektív Interakciós Protokoll
-- **Objektív:** Autonóm végrehajtás.
-- **Szubjektív:** UI/UX, kreatív döntések esetén **jóváhagyást kér (y/n)**.
+### 4. 📊 Adatgyűjtés és Analitika
+- **Scrapy Spider Builder:** Komplex webes crawlerek készítése.
+- **YT Transcript Summarizer:** YouTube feliratok intelligens összegzése.
+- **Media Fetcher:** YouTube metaadatok és média kinyerése.
+- **Web Browser:** Intelligens keresés és scrape.
+- **PDF/Docs Parser:** Adatkivonás dokumentumokból.
 
-### 4. Autonóm Fejlesztés és Tanulás
-- **Self-Healing Coder:** Docker sandboxban validált kódgenerálás.
-- **Skill Creator:** Új képességek autonóm létrehozása.
-- **Idle Learning:** Háttérben futó tudásbázis építés.
+### 5. Intelligens Autonómia
+- **Selective Interaction:** Szubjektív döntéseknél **jóváhagyást kér (y/n)**.
+- **Skill Creator:** Autonóm módon ír és regisztrál magának új képességeket.
+- **Idle Learning:** Háttérben futó RAG tudásbázis építés a `raw_data`-ból.
+- **Self-Healing:** Docker sandboxban validált öngyógyító kódolás.
 
 ## 🛠 Technológiai Stack
-- **Python 3.11+, Ollama, ChromaDB, Textual, Docker, Nmap.**
+- **Python 3.11+, Ollama, ChromaDB, Textual, Docker, Nmap, BeautifulSoup, Scrapy, yt-dlp.**
 
 ## ⚙️ Telepítés és Indítás
 1. `pip install -r requirements.txt`

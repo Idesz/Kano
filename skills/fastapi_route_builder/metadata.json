@@ -1,0 +1,6 @@
+{
+    "name": "fastapi_route_builder",
+    "description": "Generates production-ready FastAPI routes with Pydantic validation.",
+    "class_name": "FastAPIRouteBuilder",
+    "version": "1.0.0"
+}

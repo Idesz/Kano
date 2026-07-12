@@ -1,0 +1,6 @@
+{
+    "name": "scrapy_spider_builder",
+    "description": "Generates advanced Scrapy spiders for complex web scraping tasks.",
+    "class_name": "ScrapySpiderBuilder",
+    "version": "1.0.0"
+}

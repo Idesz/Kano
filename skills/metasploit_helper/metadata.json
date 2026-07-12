@@ -1,0 +1,6 @@
+{
+    "name": "metasploit_helper",
+    "description": "Guides the user through Metasploit module selection and payload configuration.",
+    "class_name": "MetasploitHelper",
+    "version": "1.0.0"
+}
