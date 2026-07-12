@@ -1,0 +1,6 @@
+{
+    "name": "systematic_debugger",
+    "description": "Performs a deep, step-by-step analysis of bugs and provides a systematic plan for resolution (inspired by obra/superpowers).",
+    "class_name": "SystematicDebugger",
+    "version": "1.0.0"
+}

@@ -1,0 +1,6 @@
+{
+    "name": "frontend_designer",
+    "description": "Generates modern, responsive frontend components and layouts (inspired by anthropics/skills).",
+    "class_name": "FrontendDesigner",
+    "version": "1.0.0"
+}

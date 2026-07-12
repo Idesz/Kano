@@ -1,0 +1,6 @@
+{
+    "name": "architecture_optimizer",
+    "description": "Analyzes the codebase and suggests architectural improvements following best practices (inspired by mattpocock/skills).",
+    "class_name": "ArchitectureOptimizer",
+    "version": "1.0.0"
+}

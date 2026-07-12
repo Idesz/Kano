@@ -1,0 +1,6 @@
+{
+    "name": "prd_generator",
+    "description": "Converts loose ideas or feature requests into a structured Product Requirements Document (inspired by mattpocock/skills).",
+    "class_name": "PRDGenerator",
+    "version": "1.0.0"
+}
