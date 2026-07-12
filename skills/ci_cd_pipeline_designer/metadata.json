@@ -1,0 +1,6 @@
+{
+    "name": "ci_cd_pipeline_designer",
+    "description": "Generates CI/CD pipeline configurations (GitHub Actions, GitLab CI).",
+    "class_name": "CICDPipelineDesigner",
+    "version": "1.0.0"
+}

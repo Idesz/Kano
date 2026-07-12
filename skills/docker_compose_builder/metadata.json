@@ -1,0 +1,6 @@
+{
+    "name": "docker_compose_builder",
+    "description": "Creates complex multi-container Docker Compose environments.",
+    "class_name": "DockerComposeBuilder",
+    "version": "1.0.0"
+}

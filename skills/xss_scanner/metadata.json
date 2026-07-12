@@ -1,0 +1,6 @@
+{
+    "name": "xss_scanner",
+    "description": "Generates payloads and methodology for testing Cross-Site Scripting vulnerabilities.",
+    "class_name": "XSSScanner",
+    "version": "1.0.0"
+}

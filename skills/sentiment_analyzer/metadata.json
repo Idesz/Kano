@@ -1,0 +1,6 @@
+{
+    "name": "sentiment_analyzer",
+    "description": "Analyzes the sentiment of a given text block.",
+    "class_name": "SentimentAnalyzer",
+    "version": "1.0.0"
+}

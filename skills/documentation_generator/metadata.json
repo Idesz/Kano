@@ -1,0 +1,6 @@
+{
+    "name": "documentation_generator",
+    "description": "Automatically generates high-quality READMEs and API documentation.",
+    "class_name": "DocumentationGenerator",
+    "version": "1.0.0"
+}

@@ -1,0 +1,6 @@
+{
+    "name": "regex_master",
+    "description": "Generates and explains complex regular expressions.",
+    "class_name": "RegexMaster",
+    "version": "1.0.0"
+}

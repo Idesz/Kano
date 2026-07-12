@@ -1,0 +1,6 @@
+{
+    "name": "data_cleaner",
+    "description": "Automates data cleaning and preprocessing tasks using Pandas.",
+    "class_name": "DataCleaner",
+    "version": "1.0.0"
+}

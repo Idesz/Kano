@@ -1,0 +1,6 @@
+{
+    "name": "refactoring_expert",
+    "description": "Applies advanced design patterns and refactoring techniques to clean up legacy code.",
+    "class_name": "RefactoringExpert",
+    "version": "1.0.0"
+}

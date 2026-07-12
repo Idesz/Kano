@@ -1,0 +1,6 @@
+{
+    "name": "sqli_tester",
+    "description": "Provides specialized payloads and methodology for testing SQL injection vulnerabilities.",
+    "class_name": "SQLiTester",
+    "version": "1.0.0"
+}
