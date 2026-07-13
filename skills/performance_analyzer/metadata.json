@@ -1,0 +1,6 @@
+{
+    "name": "performance_analyzer",
+    "description": "Measures execution time and resource usage of code snippets.",
+    "class_name": "PerformanceAnalyzer",
+    "version": "1.0.0"
+}

@@ -1,0 +1,6 @@
+{
+    "name": "cloud_deployer",
+    "description": "Orchestrates cloud deployments using Terraform and Ansible logic.",
+    "class_name": "CloudDeployer",
+    "version": "1.0.0"
+}

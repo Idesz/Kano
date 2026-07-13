@@ -1,0 +1,6 @@
+{
+    "name": "fuzzer",
+    "description": "Performs stress testing and security fuzzing on inputs and APIs.",
+    "class_name": "Fuzzer",
+    "version": "1.0.0"
+}
