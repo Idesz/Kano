@@ -1,6 +1,0 @@
-{
-    "name": "brute_force_planner",
-    "description": "Designs strategic brute-force and dictionary attack plans.",
-    "class_name": "BruteForcePlanner",
-    "version": "1.0.0"
-}

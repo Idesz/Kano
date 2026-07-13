@@ -1,6 +1,0 @@
-{
-    "name": "hash_cracker",
-    "description": "Guides the user on cracking various hash types using tools like Hashcat or John the Ripper.",
-    "class_name": "HashCracker",
-    "version": "1.0.0"
-}

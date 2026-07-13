@@ -9,6 +9,7 @@ from core.memory import MemoryManager
 from core.context_manager import ContextManager
 from core.audit_logger import AuditLogger
 from core.hallucination_detector import HallucinationDetector
+from core.config import Config
 from agents.base_agent import BaseAgent
 from agents.coder_agent import CoderAgent
 from agents.ingestor_agent import IngestorAgent
@@ -35,10 +36,28 @@ class MasterAgent(BaseAgent):
         self.browser = BrowserAgent(self.router)
         self.roadmap = RoadmapAgent(self.router)
 
-    async def run_async_pipeline(self, tasks: list):
-        """Executes multiple skills/tasks in a non-blocking pipeline."""
-        results = await asyncio.gather(*[asyncio.to_thread(self.run, t) for t in tasks])
-        return results
+    def run(self, task: str, approved: bool = False):
+        from core.guardrail import Guardrail
+        allowed, msg = Guardrail.filter_input(task)
+        if not allowed: return msg
+
+        decision = self.classify_intent(task)
+        if decision.get("needs_approval") and not approved: return "APPROVAL_REQUIRED", decision.get("reason")
+
+        target = decision.get("target")
+        # Ensure target is valid before dispatching
+        if target == "Roadmap": return self.roadmap.run(task)
+        if target == "Browser": return self.browser.run(task)
+        if target == "Security": return self.security.run(task)
+        if target == "Scaffold": return self.scaffolder.run(task)
+        if target == "Coder": return self.coder.run(task)
+        if target == "Ingestor": return self.ingestor.run(task)
+
+        if target in self.registry.skills:
+            # Security: Skills requiring code execution should use the Sandbox agent
+            return self.registry.execute_skill_isolated(target, **decision.get("parameters", {}))
+
+        return f"Task {target} complete."
 
     def classify_intent(self, user_input: str) -> dict:
         cache = self.state.get_decision_cache()
@@ -55,22 +74,3 @@ class MasterAgent(BaseAgent):
             return decision
         except Exception:
             return {"target": "Coder", "reason": "Fallback", "needs_approval": False}
-
-    def run(self, task: str, approved: bool = False):
-        from core.guardrail import Guardrail
-        allowed, msg = Guardrail.filter_input(task)
-        if not allowed: return msg
-        decision = self.classify_intent(task)
-        if decision.get("needs_approval") and not approved: return "APPROVAL_REQUIRED", decision.get("reason")
-        target = decision.get("target")
-        if target == "Roadmap": return self.roadmap.run(task)
-        if target == "Browser": return self.browser.run(task)
-        if target == "Security": return self.security.run(task)
-        if target == "Scaffold": return self.scaffolder.run(task)
-        if target == "Coder": return self.coder.run(task)
-        if target == "Ingestor": return self.ingestor.run(task)
-        if target in self.registry.skills:
-            skill_info = self.registry.get_skill(target)
-            skill_instance = skill_info["class"]()
-            return skill_instance.execute(**decision.get("parameters", {}))
-        return f"Executing {target}..."

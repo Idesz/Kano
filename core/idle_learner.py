@@ -2,6 +2,7 @@ import os
 import time
 import threading
 import ollama
+import logging
 from core.memory import MemoryManager
 from core.model_router import ModelRouter
 
@@ -22,12 +23,15 @@ class IdleLearner:
 
     def _learning_loop(self):
         while self.running:
-            files = [f for f in os.listdir(self.raw_data_dir) if os.path.isfile(os.path.join(self.raw_data_dir, f))]
-            if files:
-                for filename in files:
-                    if not self.running: break
-                    self._process_file(filename)
-            time.sleep(60) # Check every minute
+            try:
+                files = [f for f in os.listdir(self.raw_data_dir) if os.path.isfile(os.path.join(self.raw_data_dir, f))]
+                if files:
+                    for filename in files:
+                        if not self.running: break
+                        self._process_file(filename)
+            except Exception as e:
+                logging.error(f"Learner loop error: {e}")
+            time.sleep(60)
 
     def _process_file(self, filename):
         filepath = os.path.join(self.raw_data_dir, filename)
@@ -38,26 +42,15 @@ class IdleLearner:
             with open(filepath, 'r') as f:
                 content = f.read()
 
-            # Summarize with LLM
             model = self.router.get_model_for_task("reasoning")
-            prompt = f"Summarize the following content for a knowledge base. Focus on key facts and logic.\nContent:\n{content}"
+            prompt = f"Summarize content for RAG knowledge base:\n{content}"
             response = ollama.generate(model=model, prompt=prompt)
             summary = response['response']
 
-            # Vectorize
-            self.memory.add_document(
-                text=summary,
-                metadata={"source": filename, "type": "summary"},
-                doc_id=f"summary_{filename}"
-            )
-            self.memory.add_document(
-                text=content,
-                metadata={"source": filename, "type": "raw"},
-                doc_id=f"raw_{filename}"
-            )
+            self.memory.add_document(text=summary, metadata={"source": filename, "type": "summary"}, doc_id=f"summary_{filename}")
+            self.memory.add_document(text=content, metadata={"source": filename, "type": "raw"}, doc_id=f"raw_{filename}")
 
-            # Move to processed
             os.rename(filepath, os.path.join(processed_dir, filename))
-            print(f"Learned from {filename}")
+            logging.info(f"Learned from {filename}")
         except Exception as e:
-            print(f"Error learning from {filename}: {e}")
+            logging.error(f"Error learning from {filename}: {e}")
