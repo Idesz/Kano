@@ -10,6 +10,7 @@ from agents.coder_agent import CoderAgent
 from agents.ingestor_agent import IngestorAgent
 from agents.scaffold_agent import ScaffoldAgent
 from agents.security_agent import SecurityAgent
+from agents.browser_agent import BrowserAgent
 
 class MasterAgent(BaseAgent):
     def __init__(self):
@@ -20,6 +21,7 @@ class MasterAgent(BaseAgent):
         self.ingestor = IngestorAgent(self.router)
         self.scaffolder = ScaffoldAgent(self.router)
         self.security = SecurityAgent(self.router)
+        self.browser = BrowserAgent(self.router)
         self.decision_cache = {}
         logging.basicConfig(level=logging.INFO)
 
@@ -33,14 +35,16 @@ class MasterAgent(BaseAgent):
         prompt = f"""
         Analyze the following user request and determine the target.
         Available Skills: {json.dumps(skills_list)}
-        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database, Security.
+        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database, Security, Browser (interactive).
 
-        Philosophy: We follow the 'Ponytail' (Lazy Senior Dev) approach.
-        Prefer standard library and existing skills over creating new things.
+        - BROWSER: For tasks requiring logging in, navigating complex sites, or interactive web actions.
+        - OBJECTIVE: Logic, algorithms, data.
+        - SUBJECTIVE: UI/UX, design.
+        - SECURITY: Pentesting, auditing.
 
         Response must be valid JSON:
         {{
-            "target": "skill_name or agent_name or SkillCreator or Scaffold",
+            "target": "skill_name or agent_name or SkillCreator or Scaffold or Browser",
             "reason": "short explanation",
             "needs_approval": true/false,
             "parameters": {{}}
@@ -69,7 +73,9 @@ class MasterAgent(BaseAgent):
             target = "media_fetcher"
             decision["parameters"] = {"url": re.findall(r'(https?://\S+)', task)[0], "action": "get_info"}
 
-        if target == "Security":
+        if target == "Browser":
+            return self.browser.run(task)
+        elif target == "Security":
             return self.security.run(task)
         elif target == "SkillCreator":
             return self.create_new_skill(decision.get("new_skill_name", "new_skill"), task)
@@ -84,7 +90,7 @@ class MasterAgent(BaseAgent):
             skill_instance = skill_info["class"]()
             return skill_instance.execute(**decision.get("parameters", {}))
 
-        return f"Decision: {target} (Executing with Ponytail efficiency...)"
+        return f"Decision: {target} (Executing...)"
 
     def create_new_skill(self, skill_name: str, objective: str):
         logging.info(f"Creating new skill: {skill_name}")
@@ -93,8 +99,7 @@ class MasterAgent(BaseAgent):
         meta_resp = ollama.generate(model=model, prompt=metadata_prompt, format="json")
         metadata = json.loads(meta_resp['response'])
 
-        # Skill creation also follows Ponytail
-        code_prompt = f"Write a Python class for a Kano skill named '{skill_name}'. Use Ponytail philosophy (minimum code, stdlib first). Objective: {objective}. Code only."
+        code_prompt = f"Write a Python class for a Kano skill named '{skill_name}'. Use Ponytail philosophy. Objective: {objective}. Code only."
         code, status = self.coder.run(code_prompt)
 
         skill_dir = os.path.join("skills", skill_name)

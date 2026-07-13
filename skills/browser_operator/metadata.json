@@ -1,0 +1,6 @@
+{
+    "name": "browser_operator",
+    "description": "Performs interactive web actions like clicking, typing, and navigating using Playwright.",
+    "class_name": "BrowserOperator",
+    "version": "1.0.0"
+}

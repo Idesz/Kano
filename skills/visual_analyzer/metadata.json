@@ -1,0 +1,6 @@
+{
+    "name": "visual_analyzer",
+    "description": "Analyzes screenshots and images using Vision-capable local models to provide visual feedback.",
+    "class_name": "VisualAnalyzer",
+    "version": "1.0.0"
+}
