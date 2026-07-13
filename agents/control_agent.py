@@ -2,6 +2,8 @@ import subprocess
 import os
 import ollama
 import logging
+import uuid
+import shutil
 from core.model_router import ModelRouter
 from agents.base_agent import BaseAgent
 
@@ -13,29 +15,28 @@ class ControlAgent(BaseAgent):
         self._bootstrap_sandbox()
 
     def _bootstrap_sandbox(self):
-        """Ensures the kano-sandbox image exists, builds it if missing."""
         try:
             check_cmd = ["docker", "image", "inspect", self.sandbox_image]
             subprocess.run(check_cmd, capture_output=True, check=True)
-            logging.info("Kano Sandbox image ready.")
         except subprocess.CalledProcessError:
-            logging.info("Building Kano Sandbox image (first-time setup)...")
+            logging.info("Building Kano Sandbox image...")
             build_cmd = ["docker", "build", "-t", self.sandbox_image, "-f", "sandbox.Dockerfile", "."]
-            try:
-                subprocess.run(build_cmd, check=True)
-                logging.info("Kano Sandbox image built successfully.")
-            except Exception as e:
-                logging.error(f"Failed to build sandbox image: {e}")
+            subprocess.run(build_cmd, check=True)
 
     def _run_in_docker(self, script_content: str, timeout: int = 30):
-        os.makedirs("sandbox", exist_ok=True)
-        with open("sandbox/runner.py", "w") as f:
+        # Unique workspace for each run
+        run_id = str(uuid.uuid4())
+        workspace = os.path.abspath(f"sandbox/run_{run_id}")
+        os.makedirs(workspace, exist_ok=True)
+
+        runner_path = os.path.join(workspace, "runner.py")
+        with open(runner_path, "w") as f:
             f.write(script_content)
 
         docker_cmd = [
             "docker", "run", "--rm",
             "--network", "none",
-            "-v", f"{os.getcwd()}/sandbox:/app",
+            "-v", f"{workspace}:/app",
             "-w", "/app",
             self.sandbox_image,
             "python", "runner.py"
@@ -46,10 +47,14 @@ class ControlAgent(BaseAgent):
             return result
         except subprocess.TimeoutExpired:
             return subprocess.CompletedProcess(args=docker_cmd, returncode=124, stdout="", stderr="Execution Timed Out")
+        finally:
+            # Cleanup workspace
+            if os.path.exists(workspace):
+                shutil.rmtree(workspace)
 
     def full_validation(self, code: str):
         model = self.router.get_model_for_task("coding")
-        test_prompt = f"Write comprehensive pytest test cases for the following code. Return ONLY test code.\nCode:\n{code}"
+        test_prompt = f"Write pytest test cases for the following code. Return ONLY code.\nCode:\n{code}"
         resp = ollama.generate(model=model, prompt=test_prompt)
         tests = resp['response'].strip()
         if "```" in tests: tests = tests.split("```")[1].split("```")[0].replace("python", "").strip()
@@ -64,7 +69,6 @@ try:
     import pytest
     sys.exit(pytest.main(['test_module.py']))
 except Exception as e:
-    print(f"Runner error: {{e}}")
     sys.exit(1)
 """
         result = self._run_in_docker(runner_script)

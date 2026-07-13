@@ -1,3 +1,4 @@
+import json
 import os
 
 class WikiGenerator:
@@ -24,5 +25,3 @@ class WikiGenerator:
             f.write(html_content)
 
         return f"Wiki generated at {wiki_dir}/index.html"
-
-import json
