@@ -24,8 +24,14 @@ class StateManager:
         except Exception as e:
             logging.error(f"Failed to save state: {e}")
 
+    def save_roadmap(self, project_name, roadmap_data):
+        self.state["roadmaps"][project_name] = roadmap_data
+        self.save_state()
+
+    def get_roadmap(self, project_name):
+        return self.state["roadmaps"].get(project_name)
+
     def record_user_fix(self, original_code, fixed_code, feedback):
-        """Records user-provided fixes for future fine-tuning/learning."""
         self.state["user_fixes"].append({
             "original": original_code,
             "fixed": fixed_code,

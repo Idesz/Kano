@@ -1,0 +1,6 @@
+{
+    "name": "project_indexer",
+    "description": "Recursively scans the current project directory and indexes all code files into RAG memory.",
+    "class_name": "ProjectIndexer",
+    "version": "1.0.0"
+}

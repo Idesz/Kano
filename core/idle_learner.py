@@ -5,12 +5,14 @@ import ollama
 import logging
 from core.memory import MemoryManager
 from core.model_router import ModelRouter
+from core.context_manager import ContextManager
 
 class IdleLearner:
     def __init__(self, raw_data_dir="raw_data"):
         self.raw_data_dir = raw_data_dir
         self.memory = MemoryManager()
         self.router = ModelRouter()
+        self.context = ContextManager(self.memory)
         self.running = False
 
     def start(self):
@@ -47,10 +49,11 @@ class IdleLearner:
             response = ollama.generate(model=model, prompt=prompt)
             summary = response['response']
 
-            self.memory.add_document(text=summary, metadata={"source": filename, "type": "summary"}, doc_id=f"summary_{filename}")
-            self.memory.add_document(text=content, metadata={"source": filename, "type": "raw"}, doc_id=f"raw_{filename}")
+            # Unified Chunking Flow
+            self.context.chunk_and_store(summary, source=filename, metadata={"type": "summary"})
+            self.context.chunk_and_store(content, source=filename, metadata={"type": "raw"})
 
             os.rename(filepath, os.path.join(processed_dir, filename))
-            logging.info(f"Learned from {filename}")
+            logging.info(f"Learned and chunked {filename}")
         except Exception as e:
             logging.error(f"Error learning from {filename}: {e}")
