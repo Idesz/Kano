@@ -12,6 +12,15 @@ Screen {
     border-bottom: double #00FF00;
 }
 
+#monitor {
+    dock: top;
+    height: 1;
+    background: #111111;
+    color: #00AA00;
+    text-align: right;
+    padding-right: 2;
+}
+
 #footer {
     dock: bottom;
     height: 1;
@@ -52,9 +61,5 @@ Screen {
 #prompt-input {
     background: #000000;
     color: #00FF00;
-    border: none;
-}
-
-#prompt-input:focus {
     border: none;
 }

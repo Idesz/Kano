@@ -1,0 +1,6 @@
+{
+    "name": "voice_commander",
+    "description": "Integrates local Whisper model for voice-to-task command processing.",
+    "class_name": "VoiceCommander",
+    "version": "1.0.0"
+}

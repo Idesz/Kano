@@ -1,55 +1,59 @@
 import json
 import ollama
 import logging
-import os
-import re
+import asyncio
 from core.model_router import ModelRouter
 from core.skill_registry import SkillRegistry
+from core.state_manager import StateManager
+from core.memory import MemoryManager
+from core.context_manager import ContextManager
 from agents.base_agent import BaseAgent
 from agents.coder_agent import CoderAgent
 from agents.ingestor_agent import IngestorAgent
 from agents.scaffold_agent import ScaffoldAgent
 from agents.security_agent import SecurityAgent
 from agents.browser_agent import BrowserAgent
+from agents.roadmap_agent import RoadmapAgent
 
 class MasterAgent(BaseAgent):
     def __init__(self):
         router = ModelRouter()
         super().__init__("MasterAgent", router)
         self.registry = SkillRegistry()
+        self.state = StateManager()
+        self.memory = MemoryManager()
+        self.context = ContextManager(self.memory)
+
         self.coder = CoderAgent(self.router)
         self.ingestor = IngestorAgent(self.router)
         self.scaffolder = ScaffoldAgent(self.router)
         self.security = SecurityAgent(self.router)
         self.browser = BrowserAgent(self.router)
-        self.decision_cache = {}
-        logging.basicConfig(level=logging.INFO)
+        self.roadmap = RoadmapAgent(self.router)
+
+    async def run_parallel(self, tasks: list):
+        """Runs multiple tasks in parallel across different models/agents."""
+        return await asyncio.gather(*[asyncio.to_thread(self.run, t) for t in tasks])
 
     def classify_intent(self, user_input: str) -> dict:
-        if user_input in self.decision_cache:
-            return self.decision_cache[user_input]
+        cache = self.state.get_decision_cache()
+        if user_input in cache: return cache[user_input]
 
+        relevant_context = self.context.retrieve_relevant_context(user_input)
         skills_list = self.registry.list_skills()
-        blueprints = self.scaffolder.list_blueprints()
 
         prompt = f"""
-        Analyze the following user request and determine the target.
+        Analyze the request using context.
+        Context: {relevant_context}
         Available Skills: {json.dumps(skills_list)}
-        Worker Agents: Coder, Scaffold, Ingestor, Repo, Database, Security, Browser (interactive).
 
-        - BROWSER: For tasks requiring logging in, navigating complex sites, or interactive web actions.
-        - OBJECTIVE: Logic, algorithms, data.
-        - SUBJECTIVE: UI/UX, design.
-        - SECURITY: Pentesting, auditing.
-
-        Response must be valid JSON:
+        Response JSON:
         {{
-            "target": "skill_name or agent_name or SkillCreator or Scaffold or Browser",
-            "reason": "short explanation",
+            "target": "skill/agent",
+            "reason": "...",
             "needs_approval": true/false,
             "parameters": {{}}
         }}
-
         Request: "{user_input}"
         """
 
@@ -57,57 +61,33 @@ class MasterAgent(BaseAgent):
         try:
             response = ollama.generate(model=model, prompt=prompt, format="json")
             decision = json.loads(response['response'])
-            self.decision_cache[user_input] = decision
+            self.state.update_decision_cache(user_input, decision)
             return decision
         except Exception:
-            return {"target": "Coder", "reason": "Fallback", "needs_approval": False, "parameters": {}}
+            return {"target": "Coder", "reason": "Fallback", "needs_approval": False}
 
     def run(self, task: str, approved: bool = False):
+        from core.guardrail import Guardrail
+        allowed, msg = Guardrail.filter_input(task)
+        if not allowed: return msg
+
         decision = self.classify_intent(task)
         if decision.get("needs_approval") and not approved:
             return "APPROVAL_REQUIRED", decision.get("reason")
 
         target = decision.get("target")
 
-        if "youtube.com" in task or "youtu.be" in task:
-            target = "media_fetcher"
-            decision["parameters"] = {"url": re.findall(r'(https?://\S+)', task)[0], "action": "get_info"}
+        # Dispatch
+        if target == "Roadmap": return self.roadmap.run(task)
+        if target == "Browser": return self.browser.run(task)
+        if target == "Security": return self.security.run(task)
+        if target == "Scaffold": return self.scaffolder.run(task)
+        if target == "Coder": return self.coder.run(task)
+        if target == "Ingestor": return self.ingestor.run(task)
 
-        if target == "Browser":
-            return self.browser.run(task)
-        elif target == "Security":
-            return self.security.run(task)
-        elif target == "SkillCreator":
-            return self.create_new_skill(decision.get("new_skill_name", "new_skill"), task)
-        elif target == "Scaffold":
-            return self.scaffolder.create_project(decision.get("blueprint", "fastapi_supabase"), "generated_project")
-        elif target == "Coder":
-            return self.coder.run(task)
-        elif target == "Ingestor":
-            return self.ingestor.run(task)
-        elif target in self.registry.skills:
+        if target in self.registry.skills:
             skill_info = self.registry.get_skill(target)
             skill_instance = skill_info["class"]()
             return skill_instance.execute(**decision.get("parameters", {}))
 
-        return f"Decision: {target} (Executing...)"
-
-    def create_new_skill(self, skill_name: str, objective: str):
-        logging.info(f"Creating new skill: {skill_name}")
-        metadata_prompt = f"Create a metadata.json for a Kano skill named '{skill_name}' that does: {objective}. Return valid JSON."
-        model = self.router.get_model_for_task("reasoning")
-        meta_resp = ollama.generate(model=model, prompt=metadata_prompt, format="json")
-        metadata = json.loads(meta_resp['response'])
-
-        code_prompt = f"Write a Python class for a Kano skill named '{skill_name}'. Use Ponytail philosophy. Objective: {objective}. Code only."
-        code, status = self.coder.run(code_prompt)
-
-        skill_dir = os.path.join("skills", skill_name)
-        os.makedirs(skill_dir, exist_ok=True)
-        with open(os.path.join(skill_dir, "metadata.json"), "w") as f:
-            json.dump(metadata, f, indent=4)
-        with open(os.path.join(skill_dir, f"{skill_name}.py"), "w") as f:
-            f.write(code)
-
-        self.registry.load_skills()
-        return f"Successfully created new skill: {skill_name} (Ponytail approved)"
+        return f"Executed {target}."

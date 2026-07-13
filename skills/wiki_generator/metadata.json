@@ -1,0 +1,6 @@
+{
+    "name": "wiki_generator",
+    "description": "Generates a live, static HTML wiki/documentation site for the current project.",
+    "class_name": "WikiGenerator",
+    "version": "1.0.0"
+}
