@@ -14,7 +14,7 @@ class StateManager:
                     return json.load(f)
             except Exception as e:
                 logging.error(f"Failed to load state: {e}")
-        return {"decision_cache": {}, "roadmaps": {}, "projects": []}
+        return {"decision_cache": {}, "roadmaps": {}, "user_fixes": [], "style_preferences": {}}
 
     def save_state(self):
         os.makedirs(os.path.dirname(self.persistence_file), exist_ok=True)
@@ -23,6 +23,15 @@ class StateManager:
                 json.dump(self.state, f, indent=4)
         except Exception as e:
             logging.error(f"Failed to save state: {e}")
+
+    def record_user_fix(self, original_code, fixed_code, feedback):
+        """Records user-provided fixes for future fine-tuning/learning."""
+        self.state["user_fixes"].append({
+            "original": original_code,
+            "fixed": fixed_code,
+            "feedback": feedback
+        })
+        self.save_state()
 
     def update_decision_cache(self, key, value):
         self.state["decision_cache"][key] = value

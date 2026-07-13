@@ -10,3 +10,6 @@ requests
 pydantic
 pytest
 playwright
+psutil
+fastapi
+uvicorn

@@ -11,7 +11,7 @@ class ScaffoldAgent(BaseAgent):
         self.blueprints_dir = "blueprints"
 
     def list_blueprints(self):
-        return os.listdir(self.blueprints_dir)
+        return os.listdir(self.blueprints_dir) if os.path.exists(self.blueprints_dir) else []
 
     def create_project(self, blueprint_name: str, project_name: str):
         blueprint_path = os.path.join(self.blueprints_dir, blueprint_name)
@@ -38,5 +38,12 @@ class ScaffoldAgent(BaseAgent):
         return f"Project {project_name} scaffolded with files: {', '.join(results)}"
 
     def run(self, task: str):
-        # Logic to parse blueprint and project name from task
-        return self.create_project("fastapi_supabase", "my_new_app")
+        """Parses project name and blueprint from task."""
+        # Simple extraction logic for demo
+        project_name = "new_project"
+        blueprint = "fastapi_supabase"
+
+        if "named" in task.lower():
+            project_name = task.split("named")[-1].strip().split()[0]
+
+        return self.create_project(blueprint, project_name)

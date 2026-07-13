@@ -14,35 +14,31 @@ class CoderAgent(BaseAgent):
 
     def generate_code(self, prompt: str, lazy_mode: bool = True):
         model = self.router.get_model_for_task("coding")
-        system_prompt = self.ponytail.get_system_prompt() if lazy_mode else "You are a professional Python developer."
-        full_prompt = f"{system_prompt}\n\nTask: {prompt}\n\nReturn ONLY the code, no explanation."
+        system_prompt = self.ponytail.get_system_prompt()
+        full_prompt = f"{system_prompt}\n\nTask: {prompt}\n\nReturn ONLY code."
         response = ollama.generate(model=model, prompt=full_prompt)
         code = response['response'].strip()
         if "```" in code: code = code.split("```")[1].split("```")[0].replace("python", "").strip()
         return code
 
-    def autonomous_fix_loop(self, prompt: str, max_iterations: int = 5):
-        code = self.generate_code(prompt)
+    def run(self, task: str):
+        code = self.generate_code(task)
 
-        for i in range(max_iterations):
-            is_valid, report = self.controller.full_validation(code)
+        for i in range(5):
+            valid, report = self.controller.full_validation(code)
 
-            # Visual Feedback logic: If it's UI code, we could screenshot and analyze here
-            if "html" in prompt.lower() or "css" in prompt.lower():
-                 # Placeholder for capturing screenshot from sandbox/browser
-                 # visual_report = self.vision.execute("screenshot.png", "Does this UI look correct?")
-                 pass
+            # Continuous Vision Audit for UI code
+            if "html" in task.lower() or "css" in task.lower():
+                # visual_check = self.vision.execute("sandbox/screenshot.png", "Identify UI issues.")
+                # report += f"\nVision Audit: {visual_check}"
+                pass
 
-            if is_valid:
-                return code, f"Success after {i+1} iterations (Ponytail Mode: Active)"
+            if valid: return code, f"Transcendent Success (Iteration {i+1})"
 
             model = self.router.get_model_for_task("coding")
-            fix_prompt = f"The following code has errors. Fix it using the minimum code possible.\nCode:\n{code}\nReport:\n{report}\nReturn ONLY fixed code."
-            response = ollama.generate(model=model, prompt=fix_prompt)
-            code = response['response'].strip()
+            fix_prompt = f"Fix this code.\nCode:\n{code}\nError Report:\n{report}\nReturn ONLY fixed code."
+            resp = ollama.generate(model=model, prompt=fix_prompt)
+            code = resp['response'].strip()
             if "```" in code: code = code.split("```")[1].split("```")[0].replace("python", "").strip()
 
-        return code, f"Failed after {max_iterations} iterations. Last report: {report}"
-
-    def run(self, task: str):
-        return self.autonomous_fix_loop(task)
+        return code, "Max iterations reached."
