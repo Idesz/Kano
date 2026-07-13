@@ -1,6 +1,7 @@
 import subprocess
 import os
 import ollama
+import logging
 from core.model_router import ModelRouter
 from agents.base_agent import BaseAgent
 
@@ -9,9 +10,24 @@ class ControlAgent(BaseAgent):
         router = model_router or ModelRouter()
         super().__init__("ControlAgent", router)
         self.sandbox_image = "kano-sandbox:latest"
+        self._bootstrap_sandbox()
+
+    def _bootstrap_sandbox(self):
+        """Ensures the kano-sandbox image exists, builds it if missing."""
+        try:
+            check_cmd = ["docker", "image", "inspect", self.sandbox_image]
+            subprocess.run(check_cmd, capture_output=True, check=True)
+            logging.info("Kano Sandbox image ready.")
+        except subprocess.CalledProcessError:
+            logging.info("Building Kano Sandbox image (first-time setup)...")
+            build_cmd = ["docker", "build", "-t", self.sandbox_image, "-f", "sandbox.Dockerfile", "."]
+            try:
+                subprocess.run(build_cmd, check=True)
+                logging.info("Kano Sandbox image built successfully.")
+            except Exception as e:
+                logging.error(f"Failed to build sandbox image: {e}")
 
     def _run_in_docker(self, script_content: str, timeout: int = 30):
-        """Runs a bundled script in the isolated Kano Sandbox."""
         os.makedirs("sandbox", exist_ok=True)
         with open("sandbox/runner.py", "w") as f:
             f.write(script_content)
@@ -30,11 +46,8 @@ class ControlAgent(BaseAgent):
             return result
         except subprocess.TimeoutExpired:
             return subprocess.CompletedProcess(args=docker_cmd, returncode=124, stdout="", stderr="Execution Timed Out")
-        except Exception as e:
-            return subprocess.CompletedProcess(args=docker_cmd, returncode=1, stdout="", stderr=str(e))
 
     def full_validation(self, code: str):
-        # Bundled runner script that doesn't need to write to disk inside Docker (only to the mounted volume)
         model = self.router.get_model_for_task("coding")
         test_prompt = f"Write comprehensive pytest test cases for the following code. Return ONLY test code.\nCode:\n{code}"
         resp = ollama.generate(model=model, prompt=test_prompt)
@@ -43,18 +56,13 @@ class ControlAgent(BaseAgent):
 
         runner_script = f"""
 import sys
-import os
-
 code = {repr(code)}
 tests = {repr(tests)}
-
 with open('tested_module.py', 'w') as f: f.write(code)
 with open('test_module.py', 'w') as f: f.write('from tested_module import *\\n' + tests)
-
 try:
     import pytest
-    retcode = pytest.main(['test_module.py'])
-    sys.exit(retcode)
+    sys.exit(pytest.main(['test_module.py']))
 except Exception as e:
     print(f"Runner error: {{e}}")
     sys.exit(1)

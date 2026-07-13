@@ -1,0 +1,6 @@
+{
+    "name": "memory_cleaner",
+    "description": "Identifies and removes duplicate or outdated entries from the ChromaDB memory.",
+    "class_name": "MemoryCleaner",
+    "version": "1.0.0"
+}

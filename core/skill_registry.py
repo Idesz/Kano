@@ -3,6 +3,8 @@ import json
 import importlib.util
 import logging
 import multiprocessing
+import subprocess
+import sys
 
 class SkillRegistry:
     def __init__(self, skills_dir="skills"):
@@ -24,9 +26,10 @@ class SkillRegistry:
                     with open(metadata_file, 'r') as f:
                         metadata = json.load(f)
 
+                    self._setup_skill_venv(skill_path)
+
                     module_file = os.path.join(skill_path, f"{skill_name}.py")
                     if os.path.exists(module_file):
-                        # Store metadata and path, load class on demand
                         self.skills[skill_name] = {
                             "path": module_file,
                             "class_name": metadata.get("class_name", skill_name.replace("_", " ").title().replace(" ", "")),
@@ -35,16 +38,30 @@ class SkillRegistry:
                 except Exception as e:
                     logging.error(f"Failed to index skill {skill_name}: {e}")
 
+    def _setup_skill_venv(self, skill_path):
+        """Creates venv and installs requirements if present in the skill directory."""
+        venv_path = os.path.join(skill_path, "venv")
+        req_file = os.path.join(skill_path, "requirements.txt")
+
+        if os.path.exists(req_file) and not os.path.exists(venv_path):
+            logging.info(f"Setting up venv for {skill_path}...")
+            try:
+                subprocess.run([sys.executable, "-m", "venv", venv_path], check=True)
+                # Install requirements
+                pip_path = os.path.join(venv_path, "bin", "pip") if os.name != "nt" else os.path.join(venv_path, "Scripts", "pip.exe")
+                subprocess.run([pip_path, "install", "-r", req_file], check=True)
+                logging.info(f"Venv ready for {skill_path}")
+            except Exception as e:
+                logging.error(f"Failed to setup venv for {skill_path}: {e}")
+
     def execute_skill_isolated(self, skill_name, **kwargs):
-        """Executes a skill in a separate process to prevent crashes."""
         if skill_name not in self.skills:
             return f"Skill {skill_name} not found."
 
-        # Process isolation using multiprocessing
         result_queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self._run_skill_process, args=(skill_name, kwargs, result_queue))
         p.start()
-        p.join(timeout=60) # Skill timeout
+        p.join(timeout=60)
 
         if p.is_alive():
             p.terminate()

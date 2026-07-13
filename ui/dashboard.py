@@ -30,13 +30,14 @@ class KanoDashboard(App):
         self.master = MasterAgent()
         self.learner = IdleLearner()
         self.pending_task = None
+        self.max_log_lines = 5000 # Log Rotation
 
     def compose(self) -> ComposeResult:
-        yield Static("KANO 🤖 - GOD MODE EDITION", id="header")
+        yield Static("KANO 🤖 - FLAWLESS EDITION", id="header")
         yield HardwareMonitor(id="monitor")
         with Horizontal(classes="main-container"):
-            yield RichLog(id="log-panel", highlight=True, markup=True)
-            yield Static("System Core: Online\nWaiting for orders.", id="code-panel")
+            yield RichLog(id="log-panel", highlight=True, markup=True, max_lines=self.max_log_lines)
+            yield Static("System Core: Flawless\nWaiting for orders.", id="code-panel")
         with Container(id="input-container"):
             yield Input(placeholder="Execute command...", id="prompt-input")
         yield Footer()
@@ -44,8 +45,7 @@ class KanoDashboard(App):
     def on_mount(self) -> None:
         self.log_panel = self.query_one("#log-panel", RichLog)
         self.code_panel = self.query_one("#code-panel", Static)
-        self.log_panel.write("[bold green]God-Mode initialized.[/bold green]")
-        self.log_panel.write(f"[green]Memory: {len(self.master.registry.skills)} skills registered.[/green]")
+        self.log_panel.write("[bold green]System initialized with perfectionist safeguards.[/bold green]")
         self.learner.start()
         self.query_one("#prompt-input").focus()
 
@@ -68,14 +68,14 @@ class KanoDashboard(App):
         asyncio.create_task(self.process_request(user_input))
 
     async def process_request(self, user_input: str, approved: bool = False):
-        self.log_panel.write("[yellow]Processing with God-Mode logic...[/yellow]")
+        self.log_panel.write("[yellow]Processing...[/yellow]")
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, self.master.run, user_input, approved)
 
         if isinstance(result, tuple) and result[0] == "APPROVAL_REQUIRED":
             self.pending_task = user_input
             self.log_panel.write(f"[bold orange3]⚠️ SUBJECTIVE DECISION:[/bold orange3] {result[1]}")
-            self.log_panel.write("[bold cyan]Approve execution? (y/n)[/bold cyan]")
+            self.log_panel.write("[bold cyan]Approve? (y/n)[/bold cyan]")
             return
 
         if isinstance(result, tuple) and len(result) == 2:
