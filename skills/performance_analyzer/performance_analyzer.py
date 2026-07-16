@@ -1,11 +1,15 @@
+import ollama
+from core.model_router import ModelRouter
 from agents.control_agent import ControlAgent
+from agents.base_agent import BaseAgent
 
-class PerformanceAnalyzer:
-    def __init__(self):
-        self.controller = ControlAgent()
+class PerformanceAnalyzer(BaseAgent):
+    def __init__(self, model_router: ModelRouter = None):
+        router = model_router or ModelRouter()
+        super().__init__("PerformanceAnalyzer", router)
+        self.controller = ControlAgent(router)
 
     def execute(self, code: str):
-        """Measures the performance of a given code snippet using the secure Docker sandbox."""
         perf_script = f"""
 import time
 import os
@@ -20,14 +24,14 @@ except Exception as e:
     print(f"PERF_ERROR:{{e}}")
     sys.exit(1)
 """
-        success, output = self.controller.run_tests(perf_script, "")
+        # Fixed: using self.controller.run() or a valid method
+        success, output = self.controller.run(perf_script)
 
         if not success:
             return {"status": "Error", "message": output}
 
-        # Parse time from output
         try:
-            time_val = float(output.split("PERF_TIME:")[1].strip())
+            time_val = float(output.split("PERF_TIME:")[1].split()[0].strip())
             return {"status": "Success", "execution_time_sec": time_val}
         except:
             return {"status": "Error", "message": "Failed to parse performance data"}

@@ -1,7 +1,7 @@
-import json
 import ollama
 import logging
 import asyncio
+from core.config import Config # Integrated config
 from core.model_router import ModelRouter
 from core.skill_registry import SkillRegistry
 from core.state_manager import StateManager
@@ -19,7 +19,7 @@ from agents.roadmap_agent import RoadmapAgent
 
 class MasterAgent(BaseAgent):
     def __init__(self):
-        router = ModelRouter()
+        router = ModelRouter(default_model=Config.DEFAULT_MODEL)
         super().__init__("MasterAgent", router)
         self.registry = SkillRegistry()
         self.state = StateManager()
@@ -34,28 +34,6 @@ class MasterAgent(BaseAgent):
         self.security = SecurityAgent(self.router)
         self.browser = BrowserAgent(self.router)
         self.roadmap = RoadmapAgent(self.router)
-
-    async def classify_intent_async(self, user_input: str) -> dict:
-        cache = self.state.get_decision_cache()
-        if user_input in cache: return cache[user_input]
-
-        relevant_context = self.context.retrieve_relevant_context(user_input)
-        skills_list = self.registry.list_skills()
-        prompt = f"Analyze request. Context: {relevant_context}\nSkills: {json.dumps(skills_list)}\nRequest: {user_input}"
-
-        # USE QUEUED GENERATION
-        response = await self.router.generate_queued("reasoning", prompt, format="json")
-        try:
-            decision = json.loads(response['response'])
-            self.state.update_decision_cache(user_input, decision)
-            self.audit.log_decision(user_input, decision)
-            return decision
-        except Exception:
-            return {"target": "Coder", "reason": "Fallback"}
-
-    def run(self, task: str, approved: bool = False):
-        # Master run is typically called from dashboard async loop
-        return asyncio.run(self.run_async(task, approved))
 
     async def run_async(self, task: str, approved: bool = False):
         from core.guardrail import Guardrail
@@ -75,4 +53,24 @@ class MasterAgent(BaseAgent):
 
         if target in self.registry.skills:
             return self.registry.execute_skill_isolated(target, **decision.get("parameters", {}))
-        return f"Completed {target}."
+        return f"Task {target} complete."
+
+    async def classify_intent_async(self, user_input: str) -> dict:
+        cache = self.state.get_decision_cache()
+        if user_input in cache: return cache[user_input]
+
+        relevant_context = self.context.retrieve_relevant_context(user_input)
+        skills_list = self.registry.list_skills()
+        prompt = f"Analyze request. Context: {relevant_context}\nSkills: {json.dumps(skills_list)}\nRequest: {user_input}"
+
+        response = await self.router.generate_queued("reasoning", prompt, format="json")
+        try:
+            decision = json.loads(response['response'])
+            self.state.update_decision_cache(user_input, decision)
+            self.audit.log_decision(user_input, decision)
+            return decision
+        except Exception:
+            return {"target": "Coder", "reason": "Fallback"}
+
+    def run(self, task: str, approved: bool = False):
+        return asyncio.run(self.run_async(task, approved))

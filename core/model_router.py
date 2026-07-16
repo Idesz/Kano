@@ -4,16 +4,17 @@ import time
 import asyncio
 
 class ModelRouter:
-    _instance_semaphore = None # Initialize lazily inside loop
+    _instance_semaphore = None
 
-    def __init__(self, default_model="llama3", cache_ttl=300):
+    def __init__(self, default_model="dolphin-llama3", cache_ttl=300):
         self.default_model = default_model
         self.cache_ttl = cache_ttl
         self.last_refresh = 0
+        # Categories prioritized for Uncensored/High Performance
         self.categories = {
-            "coding": ["deepseek-coder", "codellama", "starcoder"],
-            "reasoning": ["llama3", "qwen", "mistral"],
-            "chat": ["llama3", "gemma", "vicuna"],
+            "coding": ["dolphin-coder", "deepseek-coder", "codellama"],
+            "reasoning": ["dolphin-mixtral", "dolphin-llama3", "llama3"],
+            "chat": ["dolphin-llama3", "dolphin-mistral", "gemma"],
             "vision": ["llava", "moondream"]
         }
         self.available_models = []
