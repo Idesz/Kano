@@ -1,7 +1,7 @@
+import json
 import ollama
 import logging
 import asyncio
-from core.config import Config # Integrated config
 from core.model_router import ModelRouter
 from core.skill_registry import SkillRegistry
 from core.state_manager import StateManager
@@ -9,6 +9,7 @@ from core.memory import MemoryManager
 from core.context_manager import ContextManager
 from core.audit_logger import AuditLogger
 from core.hallucination_detector import HallucinationDetector
+from core.config import Config
 from agents.base_agent import BaseAgent
 from agents.coder_agent import CoderAgent
 from agents.ingestor_agent import IngestorAgent
@@ -73,4 +74,14 @@ class MasterAgent(BaseAgent):
             return {"target": "Coder", "reason": "Fallback"}
 
     def run(self, task: str, approved: bool = False):
-        return asyncio.run(self.run_async(task, approved))
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        if loop.is_running():
+            # If the loop is already running (e.g., inside Textual), run it as a future
+            return asyncio.run_coroutine_threadsafe(self.run_async(task, approved), loop).result()
+        else:
+            return loop.run_until_complete(self.run_async(task, approved))
